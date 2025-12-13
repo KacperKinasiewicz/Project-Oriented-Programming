@@ -8,3 +8,18 @@ application.windows32
 application.windows64
 application.macosx
 out
+
+# Visual Studio Code
+.vscode/
+
+# Processing
+*.class
+*.jar
+*.properties
+build/
+build-tmp/
+
+# Archives
+*.zip
+
+*.idea/
