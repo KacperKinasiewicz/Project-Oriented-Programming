@@ -1,5 +1,5 @@
 color colorBackground, colorAccent, colorText, colorActive, colorPanelBg;
-float panelHeight, canvasHeight, margin = 10;
+float panelHeight, canvasHeight, margin;
 PFont fontAudiowide;
 
 ArrayList<ToolButton> uiButtons = new ArrayList<ToolButton>();
