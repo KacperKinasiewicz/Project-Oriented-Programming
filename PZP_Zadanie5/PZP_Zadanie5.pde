@@ -35,33 +35,41 @@ void setup() {
 
 void createInterface() {
   uiButtons.clear();
-  float btnH = panelHeight - 20; 
-  float startY = canvasHeight + 10; 
-  float gap = 10;
   
-  float filterW = 110;
-  float currentX = 10;
-
-  ToolButton resetBtn = new ToolButton(currentX, startY, filterW, btnH, "Reset", true);
+  float gap = 5;
+  float sideMargin = 10;
+  
+  float btnH = (panelHeight - (3 * gap)) / 2;
+  
+  float row1Y = canvasHeight + gap;
+  float row2Y = row1Y + btnH + gap;
+  
+  String[] allFilters = {"Negatyw", "Szarość", "Progowanie", "Rozmycie", "Wyostrzanie", "Płaskorzeźba"};
+  int numFilters = allFilters.length;
+  
+  float filterTotalGap = (numFilters - 1) * gap;
+  float filterBtnW = (width - (2 * sideMargin) - filterTotalGap) / numFilters;
+  float currentX = sideMargin;
+  
+  for (String name : allFilters) {
+    uiButtons.add(new ToolButton(currentX, row1Y, filterBtnW, btnH, name, true));
+    currentX += filterBtnW + gap;
+  }
+  
+  int numSystem = 3;
+  float systemTotalGap = (numSystem - 1) * gap;
+  float systemBtnW = (width - (2 * sideMargin) - systemTotalGap) / numSystem;
+  currentX = sideMargin; 
+  
+  ToolButton resetBtn = new ToolButton(currentX, row2Y, systemBtnW, btnH, "Reset", true);
   resetBtn.isActive = true; 
   uiButtons.add(resetBtn);
-  currentX += filterW + gap;
+  currentX += systemBtnW + gap;
+    
+  uiButtons.add(new ToolButton(currentX, row2Y, systemBtnW, btnH, "Wczytaj", false));
+  currentX += systemBtnW + gap;
 
-  uiButtons.add(new ToolButton(currentX, startY, filterW, btnH, "Szarość", true));
-  currentX += filterW + gap;
-  
-  uiButtons.add(new ToolButton(currentX, startY, filterW, btnH, "Rozmycie", true));
-  currentX += filterW + gap;
-
-  uiButtons.add(new ToolButton(currentX, startY, filterW, btnH, "Krawędzie", true));
-  
-  float fileBtnW = 120;
-  float fileX = width - 10 - fileBtnW; 
-
-  uiButtons.add(new ToolButton(fileX, startY, fileBtnW, btnH, "Zapisz", false));
-  fileX -= (fileBtnW + gap);
-
-  uiButtons.add(new ToolButton(fileX, startY, fileBtnW, btnH, "Wczytaj", false));
+  uiButtons.add(new ToolButton(currentX, row2Y, systemBtnW, btnH, "Zapisz", false));
 }
 
 void draw() {
@@ -191,11 +199,21 @@ void applyCurrentFilter() {
 
   if (realW <= 0 || realH <= 0) return;
 
-  if (currentFilter.equals("Szarość")) {
+  if (currentFilter.equals("Negatyw")) {
+    PImage snippet = imgPreview.get(realX, realY, realW, realH);
+    snippet.filter(INVERT);
+    imgPreview.set(realX, realY, snippet);
+  } 
+  else if (currentFilter.equals("Szarość")) {
     PImage snippet = imgPreview.get(realX, realY, realW, realH);
     snippet.filter(GRAY);
     imgPreview.set(realX, realY, snippet);
-  } 
+  }
+  else if (currentFilter.equals("Progowanie")) {
+    PImage snippet = imgPreview.get(realX, realY, realW, realH);
+    snippet.filter(THRESHOLD, 0.5);
+    imgPreview.set(realX, realY, snippet);
+  }
   else if (currentFilter.equals("Rozmycie")) {
     float[][] matrix = {
       { 0.111, 0.111, 0.111 },
@@ -204,17 +222,27 @@ void applyCurrentFilter() {
     };
     applyMatrix(realX, realY, realW, realH, matrix);
   } 
-  else if (currentFilter.equals("Krawędzie")) {
+  else if (currentFilter.equals("Wyostrzanie")) {
     float[][] matrix = {
-      { -1, -1, -1 },
-      { -1,  8, -1 },
-      { -1, -1, -1 } 
+      {  0, -1,  0 },
+      { -1,  5, -1 },
+      {  0, -1,  0 } 
+    };
+    applyMatrix(realX, realY, realW, realH, matrix);
+  }
+  else if (currentFilter.equals("Płaskorzeźba")) {
+    float[][] matrix = {
+      { -2, -1,  0 },
+      { -1,  1,  1 },
+      {  0,  1,  2 } 
     };
     applyMatrix(realX, realY, realW, realH, matrix);
   }
 }
 
 void applyMatrix(int x, int y, int w, int h, float[][] matrix) {
+  colorMode(RGB, 255);
+  
   PImage source = imgPreview.get(x, y, w, h);
   source.loadPixels();
   imgPreview.loadPixels();
@@ -248,6 +276,8 @@ void applyMatrix(int x, int y, int w, int h, float[][] matrix) {
     }
   }
   imgPreview.updatePixels();
+  
+  colorMode(HSB, 360, 100, 100);
 }
 
 void fileSelected(File selection) {
