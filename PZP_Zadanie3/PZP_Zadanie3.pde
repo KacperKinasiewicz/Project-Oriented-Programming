@@ -57,17 +57,24 @@ PFont loadFontSafe(String fontName, String fallbackName) {
 }
 
 void createInterface() {
+  float sideMargin = 35;
+  float buttonGapSmall = 10;
+  float buttonGapLarge = 20;
+  float rowGap = 15;
+  
   float panelY = height - panelHeight;
-  float contentWidth = width - 70;
+  float contentWidth = width - (sideMargin * 2);
   float buttonHeight = 50;
   
-  float startY = panelY + (panelHeight - (buttonHeight * 2 + 15)) / 2;
+  float startY = panelY + (panelHeight - (buttonHeight * 2 + rowGap)) / 2;
   
   int[] availableSizes = {12, 16, 20, 24, 28, 32};
-  float sizeButtonWidth = (contentWidth / availableSizes.length) - 10;
+  
+  float totalGapWidth = (availableSizes.length - 1) * buttonGapSmall;
+  float sizeButtonWidth = (contentWidth - totalGapWidth) / availableSizes.length;
   
   for (int i = 0; i < availableSizes.length; i++) {
-    float posX = 35 + i * (sizeButtonWidth + 10) + 5;
+    float posX = sideMargin + i * (sizeButtonWidth + buttonGapSmall);
     
     Button btn = new Button(posX, startY, sizeButtonWidth, buttonHeight, str(availableSizes[i]), null, availableSizes[i], 1);
     
@@ -80,11 +87,13 @@ void createInterface() {
   PFont[] fontsList = {fontAudiowide, fontPixelify, fontPressStart};
   String[] namesList = {"Audiowide", "Pixelify", "PressStart"};
   
-  float fontButtonWidth = (contentWidth / 3.0) - 20;
-  float fontRowY = startY + 65;
+  float totalFontGapWidth = (fontsList.length - 1) * buttonGapLarge;
+  float fontButtonWidth = (contentWidth - totalFontGapWidth) / fontsList.length;
   
-  for (int i = 0; i < 3; i++) {
-    float posX = 35 + i * (fontButtonWidth + 20) + 10;
+  float fontRowY = startY + buttonHeight + rowGap;
+  
+  for (int i = 0; i < fontsList.length; i++) {
+    float posX = sideMargin + i * (fontButtonWidth + buttonGapLarge);
     
     Button btn = new Button(posX, fontRowY, fontButtonWidth, buttonHeight, namesList[i], fontsList[i], 0, 2);
     
@@ -310,7 +319,7 @@ class Button {
       textSize(labelSize);
     }
     
-    text(label, widthVal/2, heightVal/2 - textDescent() * 0.3);
+    text(label, widthVal/2, heightVal/2);
     popMatrix();
   }
   
