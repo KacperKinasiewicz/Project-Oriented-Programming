@@ -1,259 +1,244 @@
-color colorBackground, colorAccent, colorText, colorActive;
-float panelHeight, canvasHeight, margin = 10;
-PGraphics drawingLayer;
-float drawingX, drawingY, drawingW, drawingH;
-PFont fontAudiowide;
+int stanGry = 0; 
+Player gracz;
+Enemy potwor;
+Portal portal;
+ArrayList<Sciana> sciany;
 
-String currentTool = "Pędzel";
-color currentColor = color(0, 0, 0);
-float currentSize = 10;
+PVector pozKlucza;
+boolean kluczZebrany = false;
+boolean gora, dol, lewo, prawo;
 
-ArrayList<ToolButton> toolButtons = new ArrayList<ToolButton>();
-ArrayList<ColorButton> colorButtons = new ArrayList<ColorButton>();
-Slider sizeSlider;
+int limitCzasu = 20; 
+int pozostalyCzas;
+int czasStartuMilis;
 
 void setup() {
-  size(600, 800);
-  colorMode(HSB, 360, 100, 100);
-
-  colorBackground = color(230, 80, 15);
-  colorAccent = color(170, 100, 100);
-  colorText = color(0, 0, 100);
-  colorActive = color(170, 100, 80);
-
-  panelHeight = height * 0.25;
-  canvasHeight = height * 0.75;
-
-  drawingX = margin;
-  drawingY = margin;
-  drawingW = width - (2 * margin);
-  drawingH = canvasHeight - (2 * margin);
-
-  fontAudiowide = createFont("Audiowide.ttf", 24);
-  if (fontAudiowide == null) fontAudiowide = createFont("Arial", 24);
-
-  drawingLayer = createGraphics((int)drawingW, (int)drawingH);
-  drawingLayer.beginDraw();
-  drawingLayer.colorMode(HSB, 360, 100, 100);
-  drawingLayer.background(0, 0, 100);
-  drawingLayer.endDraw();
-
-  createInterface();
+  size(800, 600);
+  resetujGre();
 }
 
-void createInterface() {
-  float toolW = 100, toolH = 40, toolGap = 10;
-  float colorSize = 35, colorGap = 15;
-  float sliderW = 150, sectionGap = 40;
+void resetujGre() {
+  gracz = new Player();
+  potwor = new Enemy(100, 50);
+  portal = new Portal(720, 80);
+  pozKlucza = new PVector(70, 530);
+  kluczZebrany = false;
+  gora = dol = lewo = prawo = false;
   
-  float colorsSectionW = (4 * colorSize) + (3 * colorGap);
-  float totalWidth = toolW + sectionGap + colorsSectionW + sectionGap + sliderW;
-  float startX = (width - totalWidth) / 2;
-  float startY = canvasHeight + margin + (panelHeight - 2 * margin) / 2;
-
-  ToolButton brushBtn = new ToolButton(startX, startY - 45, toolW, toolH, "Pędzel");
-  brushBtn.isActive = true;
-  toolButtons.add(brushBtn);
-  toolButtons.add(new ToolButton(startX, startY - 45 + toolH + toolGap, toolW, toolH, "Gumka"));
-
-  color[] palette = {
-    color(0, 0, 100), color(0, 0, 0),
-    color(0, 100, 100), color(120, 100, 100),
-    color(240, 100, 100), color(180, 100, 100),
-    color(300, 100, 100), color(60, 100, 100)
-  };
-
-  float colorsX = startX + toolW + sectionGap;
-  float colorsY = startY - 42.5;
-
-  for (int i = 0; i < palette.length; i++) {
-    float x = colorsX + (i % 4) * (colorSize + colorGap);
-    float y = colorsY + (i / 4) * (colorSize + colorGap);
-    ColorButton btn = new ColorButton(x, y, colorSize, colorSize, palette[i]);
-    if (i == 1) btn.isActive = true;
-    colorButtons.add(btn);
-  }
-
-  sizeSlider = new Slider(colorsX + colorsSectionW + sectionGap, startY - 10, sliderW, 20, 1, 50, 10);
+  sciany = new ArrayList<Sciana>();
+  sciany.add(new Sciana(200, 100, 20, 200));
+  sciany.add(new Sciana(400, 400, 20, 200));
+  sciany.add(new Sciana(600, 100, 20, 200));
 }
 
 void draw() {
-  background(colorBackground);
+  background(20, 20, 35);
 
-  if (mousePressed) {
-    if (mouseX > drawingX && mouseX < drawingX + drawingW && mouseY > drawingY && mouseY < drawingY + drawingH) {
-      drawingLayer.beginDraw();
-      drawingLayer.strokeCap(ROUND);
-      drawingLayer.strokeWeight(currentSize);
+  switch(stanGry) {
+    case 0:
+      wyswietlTekst("UCIECZKA Z LABIRYNTU", "Znajdź klucz i dotrzyj do portalu.\nOmijaj ściany i potwora!\nNaciśnij ENTER, aby zacząć.");
+      break;
       
-      if (currentTool.equals("Gumka")) drawingLayer.stroke(0, 0, 100);
-      else drawingLayer.stroke(currentColor);
+    case 1:
+      int uplynietyCzas = (millis() - czasStartuMilis) / 1000;
+      pozostalyCzas = limitCzasu - uplynietyCzas;
       
-      drawingLayer.line(pmouseX - drawingX, pmouseY - drawingY, mouseX - drawingX, mouseY - drawingY);
-      drawingLayer.endDraw();
-    }
-    
-    if (mouseY > canvasHeight && sizeSlider.isMouseOver()) {
-      sizeSlider.update();
-      currentSize = sizeSlider.currentVal;
-    }
-  }
-
-  image(drawingLayer, drawingX, drawingY);
-
-  noFill();
-  stroke(colorAccent);
-  strokeWeight(2);
-  rect(drawingX, drawingY, drawingW, drawingH);
-  rect(margin, canvasHeight + margin, width - 2 * margin, panelHeight - 2 * margin);
-
-  for (ToolButton btn : toolButtons) btn.display();
-  for (ColorButton btn : colorButtons) btn.display();
-  sizeSlider.display();
-
-  if (mouseY < canvasHeight) {
-    noCursor();
-    ellipseMode(CENTER);
-    
-    if (currentTool.equals("Gumka")) {
-      fill(0, 0, 100);
-      stroke(0);
-      strokeWeight(1);
-    } else {
-      fill(currentColor);
-      if (brightness(currentColor) > 95 && saturation(currentColor) < 5) {
-        stroke(0);
-        strokeWeight(1);
-      } else {
-        noStroke();
+      if (pozostalyCzas <= 0) {
+        pozostalyCzas = 0;
+        stanGry = 3; 
       }
-    }
-    ellipse(mouseX, mouseY, currentSize, currentSize);
-  } else {
-    cursor(ARROW);
-  }
-}
 
-void mousePressed() {
-  if (mouseY > canvasHeight) {
-    for (ToolButton btn : toolButtons) {
-      if (btn.isMouseOver()) {
-        for (ToolButton b : toolButtons) b.isActive = false;
-        btn.isActive = true;
-        currentTool = btn.label;
-      }
-    }
+      for (Sciana s : sciany) s.display();
 
-    for (ColorButton btn : colorButtons) {
-      if (btn.isMouseOver()) {
-        for (ColorButton b : colorButtons) b.isActive = false;
-        btn.isActive = true;
-        currentColor = btn.btnColor;
+      if (!kluczZebrany) {
+        fill(255, 200, 0);
+        ellipse(pozKlucza.x, pozKlucza.y, 30, 30);
+        fill(255);
+        textSize(12);
+        textAlign(CENTER);
+        text("KLUCZ", pozKlucza.x, pozKlucza.y - 25);
         
-        if (currentTool.equals("Gumka")) {
-          currentTool = "Pędzel";
-          toolButtons.get(0).isActive = true;
-          toolButtons.get(1).isActive = false;
+        if (dist(gracz.x, gracz.y, pozKlucza.x, pozKlucza.y) < 45) {
+          kluczZebrany = true;
+          gracz.maEkwipunek = true;
+          portal.czyAktywny = true;
         }
       }
-    }
 
-    if (sizeSlider.isMouseOver()) {
-      sizeSlider.update();
-      currentSize = sizeSlider.currentVal;
-    }
+      portal.display();
+      potwor.update(gracz.x, gracz.y);
+      potwor.display();
+      gracz.update(); 
+      gracz.display();
+      
+      fill(255);
+      textAlign(LEFT);
+      textSize(24);
+      text("CZAS: " + pozostalyCzas + "s", 25, 40);
+      
+      if (dist(gracz.x, gracz.y, potwor.x, potwor.y) < 55) {
+        stanGry = 3;
+      }
+      
+      if (kluczZebrany) {
+        if (abs(gracz.x - portal.x) < 40 && abs(gracz.y - portal.y) < 50) {
+          stanGry = 2;
+        }
+      }
+      break;
+      
+    case 2:
+      wyswietlTekst("WYGRANA!", "Uciekłeś z labiryntu!\nNaciśnij R, aby zagrać ponownie.");
+      break;
+      
+    case 3:
+      String powod = (pozostalyCzas <= 0) ? "Czas się skończył!" : "Potwór Cię złapał!";
+      wyswietlTekst("PRZEGRANA", powod + "\nNaciśnij R, aby spróbować ponownie.");
+      break;
   }
 }
 
-class UIElement {
-  float x, y, w, h;
-  boolean isActive = false;
+void keyPressed() {
+  if (stanGry == 0 && keyCode == ENTER) {
+    stanGry = 1;
+    czasStartuMilis = millis();
+  }
+  if ((stanGry == 2 || stanGry == 3) && (key == 'r' || key == 'R')) {
+    stanGry = 0;
+    resetujGre();
+  }
+  setKlawisz(keyCode, true);
+}
 
-  UIElement(float x, float y, float w, float h) {
+void keyReleased() {
+  setKlawisz(keyCode, false);
+}
+
+void setKlawisz(int k, boolean stan) {
+  if (k == UP) gora = stan;
+  if (k == DOWN) dol = stan;
+  if (k == LEFT) lewo = stan;
+  if (k == RIGHT) prawo = stan;
+}
+
+void wyswietlTekst(String t1, String t2) {
+  textAlign(CENTER, CENTER);
+  fill(255);
+  textSize(40);
+  text(t1, width/2, height/2 - 30);
+  textSize(20);
+  text(t2, width/2, height/2 + 50);
+}
+
+class Sciana {
+  float x, y, w, h;
+  Sciana(float x, float y, float w, float h) {
     this.x = x; this.y = y; this.w = w; this.h = h;
   }
-
-  void display() {}
-
-  boolean isMouseOver() {
-    return mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
-  }
-}
-
-class ToolButton extends UIElement {
-  String label;
-
-  ToolButton(float x, float y, float w, float h, String label) {
-    super(x, y, w, h);
-    this.label = label;
-  }
-
-  @Override
   void display() {
-    stroke(colorAccent);
-    strokeWeight(2);
-    fill(isActive ? colorActive : colorBackground);
+    fill(80, 80, 100);
+    noStroke();
     rect(x, y, w, h);
-
-    fill(isActive ? colorText : colorAccent);
-    textAlign(CENTER, CENTER);
-    textFont(fontAudiowide);
-    textSize(18);
-    text(label, x + w/2, y + h/2);
   }
 }
 
-class ColorButton extends UIElement {
-  color btnColor;
+class Player {
+  float x, y;
+  float predkosc = 4;
+  float hitBox = 28; 
+  PShape calyBohater;
+  PShape warstwaEkwipunek;
+  boolean maEkwipunek = false;
 
-  ColorButton(float x, float y, float w, float h, color c) {
-    super(x, y, w, h);
-    this.btnColor = c;
+  Player() {
+    x = 720; y = 530;
+    calyBohater = loadShape("bohater.svg");
+    if (calyBohater != null) warstwaEkwipunek = calyBohater.getChild("ekwipunek");
   }
 
-  @Override
-  void display() {
-    stroke(isActive ? colorText : colorAccent);
-    strokeWeight(isActive ? 3 : 2);
-    fill(btnColor);
-    ellipseMode(CORNER);
-    ellipse(x, y, w, h);
-  }
-}
-
-class Slider extends UIElement {
-  float minVal, maxVal, currentVal;
-
-  Slider(float x, float y, float w, float h, float minV, float maxV, float startV) {
-    super(x, y, w, h);
-    minVal = minV; maxVal = maxV; currentVal = startV;
+  boolean sprawdzKolizje(float nx, float ny) {
+    for (Sciana s : sciany) {
+      if (nx + hitBox > s.x && nx - hitBox < s.x + s.w &&
+          ny + hitBox > s.y && ny - hitBox < s.y + s.h) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void update() {
-    float newVal = map(mouseX, x, x + w, minVal, maxVal);
-    currentVal = constrain(round(newVal), minVal, maxVal);
+    float moveX = 0;
+    float moveY = 0;
+
+    if (gora) moveY -= predkosc;
+    if (dol) moveY += predkosc;
+    if (lewo) moveX -= predkosc;
+    if (prawo) moveX += predkosc;
+
+    if (!sprawdzKolizje(x + moveX, y)) {
+      x = constrain(x + moveX, hitBox, width - hitBox);
+    }
+    if (!sprawdzKolizje(x, y + moveY)) {
+      y = constrain(y + moveY, hitBox, height - hitBox);
+    }
   }
 
-  @Override
   void display() {
-    fill(colorText);
-    textAlign(LEFT, BOTTOM);
-    textFont(fontAudiowide);
-    textSize(16);
-    text("Grubość: " + int(currentVal), x, y - 5);
+    if (calyBohater != null) {
+      if (warstwaEkwipunek != null) warstwaEkwipunek.setVisible(maEkwipunek);
+      shapeMode(CENTER);
+      shape(calyBohater, x, y, 70, 70);
+    }
+  }
+}
 
-    stroke(colorAccent);
-    strokeWeight(4);
-    line(x, y + h/2, x + w, y + h/2);
+class Enemy {
+  float x, y;
+  float predkosc = 1.6;
+  PShape calyPotwor;
+  PShape warstwaZloc;
+  boolean czyZly = false;
 
-    float handleX = map(currentVal, minVal, maxVal, x, x + w);
-    
-    if (isMouseOver() || (mousePressed && isMouseOver())) fill(colorActive);
-    else fill(colorAccent);
-    
-    noStroke();
-    rectMode(CENTER);
-    rect(handleX, y + h/2, 10, 20);
-    rectMode(CORNER);
+  Enemy(float startX, float startY) {
+    x = startX; y = startY;
+    calyPotwor = loadShape("potwor.svg");
+    if (calyPotwor != null) warstwaZloc = calyPotwor.getChild("zloc");
+  }
+
+  void update(float graczX, float graczY) {
+    if (x < graczX) x += predkosc;
+    if (x > graczX) x -= predkosc;
+    if (y < graczY) y += predkosc;
+    if (y > graczY) y -= predkosc;
+    czyZly = (dist(x, y, graczX, graczY) < 180);
+  }
+
+  void display() {
+    if (calyPotwor != null) {
+      if (warstwaZloc != null) warstwaZloc.setVisible(czyZly);
+      shapeMode(CENTER);
+      shape(calyPotwor, x, y, 75, 75);
+    }
+  }
+}
+
+class Portal {
+  float x, y;
+  PShape calyPortal;
+  PShape warstwaEnergia;
+  boolean czyAktywny = false;
+
+  Portal(float sx, float sy) {
+    x = sx; y = sy;
+    calyPortal = loadShape("portal.svg");
+    if (calyPortal != null) warstwaEnergia = calyPortal.getChild("energia");
+  }
+
+  void display() {
+    if (calyPortal != null) {
+      if (warstwaEnergia != null) warstwaEnergia.setVisible(czyAktywny);
+      shapeMode(CENTER);
+      shape(calyPortal, x, y, 100, 120);
+    }
   }
 }

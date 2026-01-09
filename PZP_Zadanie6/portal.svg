@@ -1,0 +1,12 @@
+<svg width="120" height="150" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">
+  <g id="rama">
+    <rect x="10" y="20" width="20" height="120" fill="#7f8c8d" />
+    <rect x="90" y="20" width="20" height="120" fill="#7f8c8d" />
+    <rect x="10" y="10" width="100" height="20" fill="#95a5a6" />
+  </g>
+  <g id="energia" visibility="hidden">
+    <ellipse cx="60" cy="80" rx="30" ry="50" fill="#9b59b6" opacity="0.6" />
+    <circle cx="60" cy="80" r="20" fill="#8e44ad" />
+    <circle cx="60" cy="80" r="10" fill="#dcdde1" />
+  </g>
+</svg>
