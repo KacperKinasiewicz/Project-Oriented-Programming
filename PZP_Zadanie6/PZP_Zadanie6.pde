@@ -76,7 +76,7 @@ void draw() {
       textSize(24);
       text("CZAS: " + pozostalyCzas + "s", 25, 40);
       
-      if (dist(gracz.x, gracz.y, potwor.x, potwor.y) < 55) {
+      if (dist(gracz.x, gracz.y, potwor.x, potwor.y) < 50) {
         stanGry = 3;
       }
       
@@ -238,7 +238,7 @@ class Portal {
     if (calyPortal != null) {
       if (warstwaEnergia != null) warstwaEnergia.setVisible(czyAktywny);
       shapeMode(CENTER);
-      shape(calyPortal, x, y, 100, 120);
+      shape(calyPortal, x, y, 100, 125);
     }
   }
 }
